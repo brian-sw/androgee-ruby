@@ -1,4 +1,5 @@
 require 'rest-client'
+require 'docker'
 require 'discordrb'
 require 'redis'
 require 'json'
@@ -9,6 +10,10 @@ bot = Discordrb::Commands::CommandBot.new token: ENV['RBBY'], prefix: '~'
 
 bot.ready do
   bot.game = json['games'].sample
+  # Docker.url = 'tcp://192.168.1.130:5422'
+  Docker::Container.all(all: true).each do |x|
+    puts x.info.fetch('Image')
+  end
 end
 
 bot.member_join do |event|
@@ -70,6 +75,13 @@ bot.command :minecraft do |event|
   redis = Redis.new(host: 'redis')
   redis.publish('Minecraft', event.message.content)
   redis.close
+end
+
+bot.command :docker do |event|
+  Docker::Container.all(all: true).each do |x|
+    announce_message('debug', x.info.fetch('Image'), bot)
+  end
+  'Done!'
 end
 
 Thread.new do
