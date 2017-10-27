@@ -70,12 +70,12 @@ bot.command :rust do |event|
   'done'
 end
 
-bot.command :minecraft do |event|
-  puts 'recieved input for Minecraft'
-  redis = Redis.new(host: 'redis')
-  redis.publish('Minecraft', event.message.content)
-  redis.close
-end
+# bot.command :minecraft do |event|
+#   puts 'recieved input for Minecraft'
+#   redis = Redis.new(host: 'redis')
+#   redis.publish('Minecraft', event.message.content)
+#   redis.close
+# end
 
 bot.command :docker do |event|
   Docker::Container.all(all: true).each do |x|
@@ -95,27 +95,27 @@ Thread.new do
   end
 end
 
-Thread.new do
-  redis = Redis.new(host: 'redis')
-  redis.subscribe('newMinecraftPlayers') do |on|
-    puts 'subscribed to newMinecraftPlayers'
-    on.message do |_channel, message|
-      puts message
-      announce_message 'modded-minecraft-server', message, bot
-    end
-  end
-end
+# Thread.new do
+#   redis = Redis.new(host: 'redis')
+#   redis.subscribe('newMinecraftPlayers') do |on|
+#     puts 'subscribed to newMinecraftPlayers'
+#     on.message do |_channel, message|
+#       puts message
+#       announce_message 'modded-minecraft-server', message, bot
+#     end
+#   end
+# end
 
-Thread.new do
-  redis = Redis.new(host: 'redis')
-  redis.subscribe('MinecraftPlayers') do |on|
-    puts 'subscribed to newMinecraftPlayers'
-    on.message do |_channel, message|
-      puts message
-      announce_message 'debug', message, bot
-    end
-  end
-end
+# Thread.new do
+#   redis = Redis.new(host: 'redis')
+#   redis.subscribe('MinecraftPlayers') do |on|
+#     puts 'subscribed to newMinecraftPlayers'
+#     on.message do |_channel, message|
+#       puts message
+#       announce_message 'debug', message, bot
+#     end
+#   end
+# end
 
 # TODO: shouldn't have to pass reference to bot in the method
 def announce_message(server, message, bot)
