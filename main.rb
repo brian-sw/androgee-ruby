@@ -2,6 +2,7 @@ require 'faye/websocket'
 require 'eventmachine'
 require 'rest-client'
 require 'discordrb'
+require 'rcon'
 require 'redis'
 require 'json'
 
@@ -76,6 +77,22 @@ bot.command :rust do |event|
 end
 
 bot.run :async
+
+def minecraft_command(message)
+  rcon = RCon::Query::Minecraft.new(ENV['MINECRAFT_IP'], ENV['MINECRAFT_PORT'])
+  rcon.auth(ENV['MINECRAFT_PASSWORD'])
+  rcon.command('time set 0') if message.include?('day')
+  rcon.command('time set 12000') if message.include?('night')
+  rcon.disconnect
+  if rcon.authed == false
+    'Minecraft server time changed :ok_hand:'
+  else
+    'Something got jacked up while setting the time in Minecraft :thumbsdown:'
+  end
+end
+
+# now_and_every_five_seconds = timers.now_and_every(60) { puts "Just pinged Minecraft server" }
+# Thread.new { loop { timers.wait } }
 
 # TODO: This function sucks and should be refactored
 def parse_rust_message(message, bot)
