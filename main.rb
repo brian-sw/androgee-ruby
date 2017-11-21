@@ -2,14 +2,18 @@ require 'faye/websocket'
 require 'eventmachine'
 require 'rest-client'
 require 'discordrb'
-require 'rcon'
+require './rcon'
+require 'timers'
+require 'differ'
 require 'redis'
 require 'json'
 
+$previous_players = ''
 $rust_channel = nil
 file = File.read('blob.json')
 json = JSON.parse(file)
 bot = Discordrb::Commands::CommandBot.new token: ENV['RBBY'], prefix: '~'
+timers = Timers::Group.new
 
 bot.ready do
   $rust_channel = bot.servers.dig(ENV['EGEEIO_SERVER'].to_i).text_channels.select do |channel|
@@ -76,6 +80,10 @@ bot.command :rust do |event|
   end
 end
 
+bot.command :minecraft do |event|
+  minecraft_command(event.message.content)
+end
+
 bot.run :async
 
 def minecraft_command(message)
@@ -91,8 +99,17 @@ def minecraft_command(message)
   end
 end
 
-# now_and_every_five_seconds = timers.now_and_every(60) { puts "Just pinged Minecraft server" }
-# Thread.new { loop { timers.wait } }
+timers.now_and_every(60) do
+  rcon = RCon::Query::Minecraft.new('localhost', ENV['MINECRAFT_PORT'])
+  rcon.auth(ENV['MINECRAFT_PASSWORD'])
+  players = rcon.command('list').slice!(30..-1)
+  rcon.disconnect
+  me = Differ.diff_by_word(players, $previous_players)
+  parsed = me.to_s.chop.chop.delete '{+"'
+  puts "#{parsed} just joined the server"
+  $previous_players = parsed
+end
+Thread.new { loop { timers.wait } }
 
 # TODO: This function sucks and should be refactored
 def parse_rust_message(message, bot)
