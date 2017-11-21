@@ -8,7 +8,7 @@ require 'differ'
 require 'redis'
 require 'json'
 
-$previous_players = ''
+$previous_players = '' # TODO: Make this an array of players
 $rust_channel = nil
 file = File.read('blob.json')
 json = JSON.parse(file)
@@ -104,10 +104,12 @@ timers.now_and_every(60) do
   rcon.auth(ENV['MINECRAFT_PASSWORD'])
   players = rcon.command('list').slice!(30..-1)
   rcon.disconnect
-  me = Differ.diff_by_word(players, $previous_players)
-  parsed = me.to_s.chop.chop.delete '{+"'
-  puts "#{parsed} just joined the server"
-  $previous_players = parsed
+  player_diff = Differ.diff_by_word(players, $previous_players).to_s
+  if player_diff.include?('{+"')
+    parsed = player_diff.to_s.delete '{+"}' # TODO: This will work in a pinch but should be refactored
+    puts "#{parsed} just joined the server"
+    $previous_players = parsed
+  end
 end
 Thread.new { loop { timers.wait } }
 
